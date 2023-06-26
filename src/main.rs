@@ -13,7 +13,6 @@ use std::time::Duration;
 use std::path::PathBuf;
 use std::process::{ Command, Child };
 use config::Config;
-use std::error::Error;
 
 fn main() {
 
@@ -33,7 +32,7 @@ fn main() {
         config_file.write_all(data::default_config().as_bytes()).expect("エラー : ファイルの書き込みに失敗しました。");
         println!("初回起動のため設定ファイルを作成しました。\n設定.txt ファイルを見て、設定してみましょう。\n");
     }
-
+    
     let config_result = Config::new(&config_file_path);
     match config_result {
         Ok(config) => {
@@ -47,37 +46,37 @@ fn main() {
                 sleep(Duration::from_millis(500));
 
                 if let Some(file) = get_first_jar(&server_dir) {
-                    if check::eula_check(&server_dir) {
 
-                        let mut child: Option<Child> = None;
-                        if config.get_token().len() > 0 {
-                            match rathole::run_rathole(&config.get_token(), config.get_port(), &craftershub_tmp_dir){
-                                Ok(c) => child = Some(c),
-                                Err(err) => println!("Port解放なし通信が機能できませんでした。\n{}", err),
-                            }
+                    
+
+                    let mut child: Option<Child> = None;
+                    if config.get_token().len() > 0 {
+                        match rathole::run_rathole(&config.get_token(), config.get_port(), &craftershub_tmp_dir){
+                            Ok(c) => child = Some(c),
+                            Err(err) => println!("Port解放なし通信が機能できませんでした。\n{}", err),
                         }
-                        let command_args = [
-                            "/C",
-                            "java",
-                            "-jar",
-                            &format!("-Xms{}G", config.get_memory()),
-                            &format!("-Xmx{}G", config.get_memory()),
-                            &server_dir.join(file.clone()).into_os_string().into_string().unwrap(),
-                            "nogui",
-                        ];
-                        match execute_command(&command_args, &server_dir) {
-                            Ok(_) => println!("サーバーの閉鎖"),
-                            Err(err) => println!("コマンドが正常実行できませんでした。\n{}", err),
-                        }
-                        if let Some(mut child) = child {
-                            match rathole::stop_rathole(&mut child){
-                                Ok(_) => println!("Port解放なし通信機能の終了"),
-                                Err(err) => println!("Port解放なし通信機能が正常終了できませんでした。\n{}", err),
-                            }
-                        }
-                    } else {
-                        println!("eulaの同意が必要です。eula.txtを編集してください。");
                     }
+                        
+                    let command_args = [
+                        "-jar",
+                        &format!("-Xms{}G", config.get_memory()),
+                        &format!("-Xmx{}G", config.get_memory()),
+                        &server_dir.join(file.clone()).into_os_string().into_string().unwrap(),
+                        "nogui",
+                    ];
+
+                    // println!("{:?}",command_args);
+                    println!("サーバーを起動します。");
+
+                    execute_command(&config.get_java_path(), &command_args, &server_dir);
+
+                    if let Some(mut child) = child {
+                        match rathole::stop_rathole(&mut child){
+                            Ok(_) => println!("Port解放なし通信機能の終了"),
+                            Err(err) => println!("Port解放なし通信機能が正常終了できませんでした。\n{}", err),
+                        }
+                    }
+
                 } else {
                     println!("jar ファイルが見つかりませんでした。\n{} フォルダにサーバーファイルを入れてください。\n",config.get_folder_name());
                 }
@@ -93,21 +92,32 @@ fn main() {
         }
     }
 
-    println!("Enterを入力すると終了します....");
+    println!("Enterを入力すると終了します....\nもし終了しない場合は ✖ で閉じてください。(コマンドプロンプトだとなるかもです。)");
 
     let stdin = io::stdin();
     let _ = stdin.lock().lines().next();
-
-    io::stdout().flush().ok();
 }
 
-fn execute_command(args: &[&str], dir : &PathBuf) -> Result<Child, Box<dyn Error>> {
-    let mut output = Command::new("cmd")
-    .current_dir(dir)
-    .args(args)
-    .spawn()?;
-    output.wait()?;
-    Ok(output)
+fn execute_command(exe : &str, args: &[&str], dir : &PathBuf) {
+    match Command::new(&exe).current_dir(dir).args(args).spawn(){
+        Ok(mut child) => {
+            match child.wait(){
+                Ok(status) => {
+                    if status.success() {
+                        eprintln!("サーバーが正常に終了されました。");
+                    } else {
+                        eprintln!("コマンドが異常終了しました。");
+                    }
+                }
+                Err(err) => {
+                    eprintln!("エラー : {}", err);   
+                }
+            }
+        }
+        Err(err) => {
+            eprintln!("エラー : {}", err);
+        }
+    }
 }
 
 fn get_first_jar(path: &PathBuf) -> Option<String> {

@@ -35,7 +35,7 @@ impl Config {
 
         for line in contents.lines() {
             if let Some(value) = line.split_once('=') {
-                let (key, val) = (value.0.trim(), value.1.trim().replace(" ", ""));
+                let (key, val) = (value.0.trim(), value.1.trim().replace("\"",""));
                 match key {
                     "token" => self.token = val.to_string(),
                     "port" => {

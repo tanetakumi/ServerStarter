@@ -1,27 +1,26 @@
-use std::path::PathBuf;
-use std::io::Read;
-use std::fs::File;
-// use yaml_rust::{YamlLoader};
+// use std::path::PathBuf;
+// use std::io::Read;
+// use std::fs::File;
 
 
-pub fn eula_check(path: &PathBuf) -> bool {
-    let eula_file = path.join("eula.txt");
-    if eula_file.is_file() {
-        let mut f = File::open(&eula_file).expect("ファイルが開けませんでした。");
-        let mut contents = String::new();
-        f.read_to_string(&mut contents).expect("ファイルが読み込めませんでした。");
-        // ファイルの内容に "eula=true" が含まれているかを確認
-        if contents.contains("eula=true") {
-            return true;
-        } else {
-            println!("eula=true が読み取れませんでした。");
-            return false;
-        }
-    } else {
-        println!("\x1b[31meula=true が読み取れませんでした。\x1b[0m");
-        return false;
-    }
-}
+// pub fn eula_check(path: &PathBuf) -> bool {
+//     let eula_file = path.join("eula.txt");
+//     if eula_file.is_file() {
+//         let mut f = File::open(&eula_file).expect("ファイルが開けませんでした。");
+//         let mut contents = String::new();
+//         f.read_to_string(&mut contents).expect("ファイルが読み込めませんでした。");
+//         // ファイルの内容に "eula=true" が含まれているかを確認
+//         if contents.contains("eula=true") {
+//             return true;
+//         } else {
+//             println!("eula=true が読み取れませんでした。");
+//             return false;
+//         }
+//     } else {
+//         println!("\x1b[31meula=true が読み取れませんでした。\x1b[0m");
+//         return false;
+//     }
+// }
 
 
 // pub fn server_check(path: &PathBuf, server_type: &str) {
